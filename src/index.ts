@@ -1,21 +1,31 @@
-import { ApolloServer, gql } from "apollo-server-express";
-import express from "express";
-import { createServer } from "http";
+
+import { ApolloServer, gql } from "apollo-server-express"
+import express from "express"
+import { createServer } from "http"
+import { prisma } from './prisma/client'
 
 const startServer = async () => { 
   const app = express()
   const httpServer = createServer(app)
 
   const typeDefs = gql`
-    type Query {
-      hello: String
-    }
-  `;
+  type Query {
+    users: [User]
+  }
+
+  type User {
+    id: ID!
+    email: String!
+    password: String!
+  }
+`;
 
   const resolvers = {
     Query: {
-      hello: () => 'Hello world!',
-    },
+      users: () => {
+        return prisma.user.findMany()
+      }
+    }
   };
 
   const apolloServer = new ApolloServer({

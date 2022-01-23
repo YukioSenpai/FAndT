@@ -3,15 +3,15 @@ import { compare, hash } from 'bcrypt'
 import { sign } from 'jsonwebtoken'
 import { Context, prisma } from './prisma/client'
 import { Login, UserUpdate } from './types'
-import { APP_SECRET, getUserId } from './utils'
+import { APP_SECRET } from './utils'
 
 export const resolvers = {
     Query: {
       me: async (context: Context) => {
-        const userId = getUserId(context)
           return prisma.user.findUnique({
             where: {
-              id: Number(userId),
+              //TODO
+              id: 2,
             },
           })
       },
@@ -20,17 +20,15 @@ export const resolvers = {
       }
     },
     Mutation: {
-        signupUser: async (_parent: any, args: Login, context: Context) => {
+        signupUser: async (_parent: any, args: Login) => {
           const { data: { email, password } } = args
           const hashedPassword = await hash(password, 10)
-
-          console.log(context.req.headers["authorization"])
 
           const userEmail = Prisma.validator<Prisma.UserSelect>()({
             email: true,
           })
 
-          const user = await context.prisma.user.findUnique({
+          const user = await prisma.user.findUnique({
             where: {
               email
             },
@@ -41,7 +39,7 @@ export const resolvers = {
             throw new Error(`A user already exist with this email`)
           }
 
-          const newUser = await context.prisma.user.create({
+          const newUser = await prisma.user.create({
             data: {
               email: email,
               password: hashedPassword,
@@ -50,33 +48,39 @@ export const resolvers = {
 
             return {token : sign({ userId: newUser.id }, APP_SECRET, {expiresIn: '1y'}), user: newUser};
         },
-        loginUser: async (_parent: any, args: Login, context: Context)  => {
+        loginUser: async (_parent: any, args: Login)  => {
           const { data: { email, password } } = args
 
-          const user = await context.prisma.user.findUnique({
+          const user = await prisma.user.findUnique({
             where: {
               email
             },
           })
+
           if (!user) {
             throw new Error(`No user found for email: ${email}`)
           }
+
           const passwordValid = await compare(password, user.password)
+
           if (!passwordValid) {
             throw new Error('Invalid password')
           }
+
+          const token = sign({ userId: user.id }, APP_SECRET, {expiresIn: '1d'})
+
           return {
-            token: sign({ userId: user.id }, APP_SECRET, {expiresIn: '1d'}),
+            token,
             user,
           }
         },
-        deleteUser: async (_parent: any, args: {id: number}, context: Context) => await context.prisma.user.delete({
+        deleteUser: async (_parent: any, args: {id: number}) => await prisma.user.delete({
             where: { id: Number(args.id) },
           }),
-          updateUser: async (_parent: any, args: UserUpdate, context: Context) => {
+          updateUser: async (_parent: any, args: UserUpdate) => {
             const {user : {email, firstName, lastName}} = args
 
-            return await context.prisma.user.update({
+            return await prisma.user.update({
               where: {
                 email
               },

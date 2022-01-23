@@ -1,7 +1,7 @@
 import { ApolloServer } from "apollo-server-express"
+import "dotenv/config"
 import express from "express"
 import { createServer } from "http"
-import { createContext } from "./prisma/client"
 import { resolvers } from './resolvers'
 import { typeDefs } from './schema'
 
@@ -12,7 +12,7 @@ const startServer = async () => {
   const apolloServer = new ApolloServer({
     typeDefs,
     resolvers,
-    context: createContext
+    context: ({ req, res }) => ({ req, res })
   })
 
   await apolloServer.start()

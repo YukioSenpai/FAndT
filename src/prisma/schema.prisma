@@ -17,5 +17,6 @@ model User {
   email       String    @unique
   password    String    
   firstName   String?    
-  lastName    String?   
+  lastName    String? 
+  tokenVersion Int?
 }

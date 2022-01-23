@@ -8,7 +8,7 @@ import { APP_SECRET } from './utils'
 export const resolvers = {
     Query: {
       me: async (context: Context) => {
-          return prisma.user.findUnique({
+          return context.prisma.user.findUnique({
             where: {
               //TODO
               id: 2,
@@ -20,7 +20,7 @@ export const resolvers = {
       }
     },
     Mutation: {
-        signupUser: async (_parent: any, args: Login) => {
+        signupUser: async (_parent: any, args: Login, context: Context) => {
           const { data: { email, password } } = args
           const hashedPassword = await hash(password, 10)
 
@@ -28,7 +28,7 @@ export const resolvers = {
             email: true,
           })
 
-          const user = await prisma.user.findUnique({
+          const user = await context.prisma.user.findUnique({
             where: {
               email
             },
@@ -48,10 +48,10 @@ export const resolvers = {
 
             return {token : sign({ userId: newUser.id }, APP_SECRET, {expiresIn: '1y'}), user: newUser};
         },
-        loginUser: async (_parent: any, args: Login)  => {
+        loginUser: async (_parent: any, args: Login, context: Context)  => {
           const { data: { email, password } } = args
 
-          const user = await prisma.user.findUnique({
+          const user = await context.prisma.user.findUnique({
             where: {
               email
             },
@@ -77,10 +77,10 @@ export const resolvers = {
         deleteUser: async (_parent: any, args: {id: number}) => await prisma.user.delete({
             where: { id: Number(args.id) },
           }),
-          updateUser: async (_parent: any, args: UserUpdate) => {
+          updateUser: async (_parent: any, args: UserUpdate, context: Context) => {
             const {user : {email, firstName, lastName}} = args
 
-            return await prisma.user.update({
+            return await context.prisma.user.update({
               where: {
                 email
               },

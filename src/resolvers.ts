@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { compare, hash } from 'bcrypt'
 import { sign } from 'jsonwebtoken'
-import { Context } from './prisma/client'
+import { Context, prisma } from './prisma/client'
 import { Login, UserUpdate } from './types'
 import { APP_SECRET, getUserId } from './utils'
 
@@ -9,14 +9,14 @@ export const resolvers = {
     Query: {
       me: async (context: Context) => {
         const userId = getUserId(context)
-          return context.prisma.user.findUnique({
+          return prisma.user.findUnique({
             where: {
               id: Number(userId),
             },
           })
       },
-      users: (context: Context) => {
-        return context.prisma.user.findMany()
+      users: async () => {
+        return await prisma.user.findMany()
       }
     },
     Mutation: {
